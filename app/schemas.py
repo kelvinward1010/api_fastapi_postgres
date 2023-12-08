@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 
+
+#Posts
 class PostBase(BaseModel):
     title: str
     content: str
@@ -26,7 +28,6 @@ class Post(PostBase):
         
         
 #Users
-
 class UserBase(BaseModel):
     email: EmailStr
     password: str
