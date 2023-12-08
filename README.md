@@ -1,1 +1,1 @@
-run code: uvicorn app.main:app --reload
+run api: uvicorn app.main:app --reload
