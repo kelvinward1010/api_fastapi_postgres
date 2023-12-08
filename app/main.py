@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
@@ -6,8 +6,14 @@ from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from sqlalchemy.orm import Session
+from . import models
+from .database import engine, get_db
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
 
 class Post(BaseModel):
     title: str
@@ -51,6 +57,13 @@ def find_index_post(id):
 def root():
     return {"message": "Wellcome to my api"}
 
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)):
+    
+    posts = db.query(models.Post).all()
+    
+    return {"data": posts}
+
 @app.get("/post")
 def get_posts():
     cursor.execute("""SELECT * FROM posts""")
@@ -92,23 +105,28 @@ def get_post(id: int, response: Response):
 @app.delete("/post/{id}", status_code=status.HTTP_202_ACCEPTED)
 def delete_post(id: int):
     #deleting post
-    index = find_index_post(id)
+    #index = find_index_post(id)
     
-    if index == None:
+    cursor.execute("""DELETE FROM posts WHERE id = %s returning *""", (str(id)))
+    deleted_post = cursor.fetchone()
+    conn.commit()
+    if deleted_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post {id} not found!")
     
-    my_posts.pop(index)
+    #my_posts.pop(index)
     return {"message": f"deleted post with id {id}"}
 
 
 @app.put("/post/{id}")
 def update_post(id: int, post: Post):
-    index = find_index_post(id)
-    
-    if index == None:
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s returning *""",(post.title, post.content, post.published, str(id)))
+    #index = find_index_post(id)
+    updated_post = cursor.fetchone()
+    conn.commit()
+    if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post {id} not found!")
     
-    post_dict = post.dict()
-    post_dict['id'] = id
-    my_posts[index] = post_dict
-    return {"message": f"updated post with id {id}", "data": post_dict}
+    # post_dict = post.dict()
+    # post_dict['id'] = id
+    # my_posts[index] = post_dict
+    return {"message": f"updated post with id {id}", "data": updated_post}
