@@ -9,6 +9,13 @@ class PostBase(BaseModel):
     content: str
     published: bool = True
     #rating: Optional[int] = None
+
+class Post(PostBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
     
 class CreatePost(PostBase):
     pass
@@ -18,13 +25,6 @@ class UpdatePost(BaseModel):
     content: str
     published: bool
     
-    
-class Post(PostBase):
-    id: int
-    created_at: datetime
-    
-    class Config:
-        orm_mode = True
         
         
 #Users
@@ -39,9 +39,8 @@ class User(UserBase):
     class Config:
         orm_mode = True
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
+class UserCreate(UserBase):
+    pass
 
 class UserUpdate(BaseModel):
     email: EmailStr
