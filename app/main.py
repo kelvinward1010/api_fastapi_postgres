@@ -147,6 +147,11 @@ def update_post(id: int, post: schemas.UpdatePost, db: Session = Depends(get_db)
 
 
 #Users
+@app.get("/users", response_model=List[schemas.User])
+async def get_users(db: Session = Depends(get_db)):
+    
+    users = db.query(models.User).all()
+    return users
 
 @app.post("/create_user", status_code=status.HTTP_201_CREATED)
 async def create_post(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -157,3 +162,42 @@ async def create_post(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     return new_user
+
+@app.get("/user/{id}")
+def get_user(id: int, response: Response,  db: Session = Depends(get_db)):
+    
+    user_find = db.query(models.User).filter(models.User.id == id).first()
+    
+    if not user_find:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"User with id {id} not found!")
+    return user_find
+
+
+@app.delete("/user/{id}", status_code=status.HTTP_202_ACCEPTED)
+def delete_user(id: int, db: Session = Depends(get_db)):
+    
+    deleted_user = db.query(models.User).filter(models.User.id == id)
+    
+    if deleted_user.first() == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {id} not found!")
+    
+    deleted_user.delete(synchronize_session=False)
+    db.commit()
+    
+    return {"message": f"Deleted user with id: {id}"}
+
+
+@app.put("/user/{id}")
+def update_user(id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
+    
+    user_query = db.query(models.User).filter(models.User.id == id)
+    updated_user = user_query.first()
+    
+    if updated_user == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {id} not found!")
+    
+    user_query.update(user.dict(), synchronize_session=False)
+    db.commit()
+        
+    return user_query.first()

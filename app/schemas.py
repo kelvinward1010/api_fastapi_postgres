@@ -27,6 +27,21 @@ class Post(PostBase):
         
 #Users
 
+class UserBase(BaseModel):
+    email: EmailStr
+    password: str
+
+class User(UserBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
 class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserUpdate(BaseModel):
     email: EmailStr
     password: str
