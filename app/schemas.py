@@ -15,7 +15,7 @@ class Post(PostBase):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
     
 class CreatePost(PostBase):
     pass
@@ -37,7 +37,7 @@ class User(UserBase):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserCreate(UserBase):
     pass
@@ -45,3 +45,12 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     email: EmailStr
     password: str
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    password: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True

@@ -1,13 +1,10 @@
-from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi.params import Body
-from typing import Optional, List
-from random import randrange
+from fastapi import FastAPI
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-from sqlalchemy.orm import Session
-from . import models, schemas
-from .database import engine, get_db
+from . import models
+from .database import engine
+from .routers import post, user
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -49,155 +46,10 @@ def find_index_post(id):
 def root():
     return {"message": "Wellcome to my api"}
 
-@app.get("/post", response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
-    # cursor.execute("""SELECT * FROM posts""")
-    # posts = cursor.fetchall()
-    posts = db.query(models.Post).all()
-    return posts
-
-@app.post("/createpost", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-async def create_post(new_post: schemas.CreatePost, db: Session = Depends(get_db)):
-    # post_dict = new_post.dict()
-    # post_dict["id"] = randrange(0,100000)
-    # my_posts.append(post_dict)
-    
-    #cursor.execute(f"INSERT INTO posts (title, content, published) VALUES({new_post.title}, {new_post.content}, {new_post.published})")
-    # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,
-    #                (new_post.title, new_post.content, new_post.published)
-    #                )
-    # new_post = cursor.fetchone()
-    # conn.commit()
-    
-    post = models.Post(**new_post.dict())
-    db.add(post)
-    db.commit()
-    db.refresh(post)
-    
-    return post
-
 @app.get("/post/latest")
 def get_post_latest():
     post = my_posts[len(my_posts) -1]
     return {"latest post": post}
 
-@app.get("/post/{id}")
-def get_post(id: int, response: Response,  db: Session = Depends(get_db)):
-    # cursor.execute("""SELECT * FROM posts Where id = %s""", (str(id)))
-    # post_find = cursor.fetchone()
-    
-    #post_id = find_post(id)
-    
-    post_find = db.query(models.Post).filter(models.Post.id == id).first()
-    
-    
-    if not post_find:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"post with id {id} not found!")
-        # response.status_code = status.HTTP_404_NOT_FOUND
-        # return {"message": f"post with id {id} not found!"}
-    return post_find
-
-
-@app.delete("/post/{id}", status_code=status.HTTP_202_ACCEPTED)
-def delete_post(id: int, db: Session = Depends(get_db)):
-    #deleting post
-    #index = find_index_post(id)
-    
-    # cursor.execute("""DELETE FROM posts WHERE id = %s returning *""", (str(id)))
-    # deleted_post = cursor.fetchone()
-    # conn.commit()
-    
-    deleted_post = db.query(models.Post).filter(models.Post.id == id)
-    
-    if deleted_post.first() == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post {id} not found!")
-    
-    deleted_post.delete(synchronize_session=False)
-    db.commit()
-    
-    #my_posts.pop(index)
-    return {"message": f"deleted post with id {id}"}
-
-
-@app.put("/post/{id}")
-def update_post(id: int, post: schemas.UpdatePost, db: Session = Depends(get_db)):
-    #cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s returning *""",(post.title, post.content, post.published, str(id)))
-    # updated_post = cursor.fetchone()
-    # conn.commit()
-    
-    #index = find_index_post(id)
-    
-    post_query = db.query(models.Post).filter(models.Post.id == id)
-    
-    updated_post = post_query.first()
-    
-    if updated_post == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post {id} not found!")
-    
-    # post_dict = post.dict()
-    # post_dict['id'] = id
-    # my_posts[index] = post_dict
-    
-    post_query.update(post.dict(), synchronize_session=False)
-    db.commit()
-        
-    return post_query.first()
-
-
-
-#Users
-@app.get("/users", response_model=List[schemas.User])
-async def get_users(db: Session = Depends(get_db)):
-    
-    users = db.query(models.User).all()
-    return users
-
-@app.post("/create_user", status_code=status.HTTP_201_CREATED)
-async def create_post(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    
-    new_user = models.User(**user.dict())
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return new_user
-
-@app.get("/user/{id}")
-def get_user(id: int, response: Response,  db: Session = Depends(get_db)):
-    
-    user_find = db.query(models.User).filter(models.User.id == id).first()
-    
-    if not user_find:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"User with id {id} not found!")
-    return user_find
-
-
-@app.delete("/user/{id}", status_code=status.HTTP_202_ACCEPTED)
-def delete_user(id: int, db: Session = Depends(get_db)):
-    
-    deleted_user = db.query(models.User).filter(models.User.id == id)
-    
-    if deleted_user.first() == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {id} not found!")
-    
-    deleted_user.delete(synchronize_session=False)
-    db.commit()
-    
-    return {"message": f"Deleted user with id: {id}"}
-
-
-@app.put("/user/{id}")
-def update_user(id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
-    
-    user_query = db.query(models.User).filter(models.User.id == id)
-    updated_user = user_query.first()
-    
-    if updated_user == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {id} not found!")
-    
-    user_query.update(user.dict(), synchronize_session=False)
-    db.commit()
-        
-    return user_query.first()
+app.include_router(post.router)
+app.include_router(user.router)
