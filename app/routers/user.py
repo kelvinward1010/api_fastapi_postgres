@@ -19,7 +19,7 @@ async def get_users(db: Session = Depends(get_db)):
     return users
 
 @router.post("/create_user", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-async def create_post(user: schemas.UserCreate, db: Session = Depends(get_db)):
+async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     
     #has the password 
     hashed_password = utils.has_password(user.password)
