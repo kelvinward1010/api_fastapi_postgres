@@ -3,32 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 
-
-#Posts
-class PostBase(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    #rating: Optional[int] = None
-
-class Post(PostBase):
-    id: int
-    created_at: datetime
-    owner_id: int
-    
-    class Config:
-        from_attributes = True
-    
-class CreatePost(PostBase):
-    pass
-    
-class UpdatePost(BaseModel):
-    title: str
-    content: str
-    published: bool
-    
-        
-        
 #Users
 class UserBase(BaseModel):
     email: EmailStr
@@ -60,6 +34,33 @@ class UserOut(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+#Posts
+class PostBase(BaseModel):
+    title: str
+    content: str
+    published: bool = True
+    #rating: Optional[int] = None
+
+class Post(PostBase):
+    id: int
+    created_at: datetime
+    owner_id: int
+    owner: UserOut
+    
+    class Config:
+        from_attributes = True
+    
+class CreatePost(PostBase):
+    pass
+    
+class UpdatePost(BaseModel):
+    title: str
+    content: str
+    published: bool
+    
+        
     
 
 
