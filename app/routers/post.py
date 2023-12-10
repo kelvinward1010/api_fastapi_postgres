@@ -1,6 +1,7 @@
 from fastapi import status, HTTPException, Depends, APIRouter, Response
 from typing import List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from .. import models, schemas, oauth2
 from ..database import engine, get_db
 
@@ -41,6 +42,20 @@ def search_posts(db: Session = Depends(get_db),
     
     return posts
 
+@router.get("/posts_vote", response_model=List[schemas.PostOutVote])
+def get_posts_vote(db: Session = Depends(get_db), 
+                   current_user: int = Depends(oauth2.get_current_user),
+                   search: Optional[str] = ""):
+    
+    #return data all post with votes
+    posts_vote_query = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.title.contains(search)).all()
+    
+    posts = []
+    for post in posts_vote_query:
+        posts.append(post._asdict())
+    
+    return posts
+
 @router.post("/create", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(new_post: schemas.CreatePost, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # post_dict = new_post.dict()
@@ -77,6 +92,16 @@ def get_post(id: int, response: Response,  db: Session = Depends(get_db), curren
                             detail=f"post with id {id} not found!")
         # response.status_code = status.HTTP_404_NOT_FOUND
         # return {"message": f"post with id {id} not found!"}
+    return post_find
+
+@router.get("/post_vote/{id}",  response_model=schemas.PostOutVote)
+def get_one_post_vote(id: int, response: Response,  db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    
+    post_find = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.id == id).first()
+    
+    if not post_find:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"post with id {id} not found!")
     return post_find
 
 

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from pydantic.types import conint
 
 
@@ -60,6 +60,13 @@ class Post(PostBase):
     
     class Config:
         from_attributes = True
+
+class PostOutVote(BaseModel):
+    Post: Post
+    votes: int
+    
+    class Config:
+        from_attributes = True
     
 class CreatePost(PostBase):
     pass
@@ -68,10 +75,13 @@ class UpdatePost(BaseModel):
     title: str
     content: str
     published: bool
-    
+
 
     
 #Vote
 class Vote(BaseModel):
     post_id: int
-    dir: conint(le=1)
+    #dir: conint(le=1)
+    dir: Literal[0,1]
+    
+    
