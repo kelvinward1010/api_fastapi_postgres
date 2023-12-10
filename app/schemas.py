@@ -1,7 +1,16 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
+from pydantic.types import conint
 
+
+#Token
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    
+class TokenData(BaseModel):
+    id: Optional[str] = None
 
 #Users
 class UserBase(BaseModel):
@@ -60,14 +69,9 @@ class UpdatePost(BaseModel):
     content: str
     published: bool
     
-        
-    
 
-
-#Token
-class Token(BaseModel):
-    access_token: str
-    token_type: str
     
-class TokenData(BaseModel):
-    id: Optional[str] = None
+#Vote
+class Vote(BaseModel):
+    post_id: int
+    dir: conint(le=1)

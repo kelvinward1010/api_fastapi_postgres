@@ -36,8 +36,6 @@ def search_posts(db: Session = Depends(get_db),
                  search: Optional[str] = ""
                 ):
     
-    print(limit)
-    
     #return data all
     posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     
